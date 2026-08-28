@@ -3,7 +3,7 @@
 | NIM |  244107020038|
 | Nama |  Nayla Akas Oktavia |
 | Kelas | TI - 3H |
-| Repository | [link] () |
+| Repository | [link] (https://github.com/naylaakas/244107020038-mobile-course/tree/main/01-week-1-mobile-development-ecosystem-flutter-refresh) |
 
 # WEEK 1
 ## Mobile Development Ecosystem & Flutter Refresh
