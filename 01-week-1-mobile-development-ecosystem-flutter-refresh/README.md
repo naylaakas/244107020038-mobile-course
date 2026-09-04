@@ -30,6 +30,14 @@ Mempelajari dasar pengembangan aplikasi mobile menggunakan Flutter
 
 ### Hasil
 
+Tampilan flutter doctor:
+
+![screenshot](screenshots/flutter-doctor.png)
+
+Tampilan flutter devices:
+
+![screenshot](screenshots/flutter-devices.png)
+
 Tampilan awal:
 
 ![screenshot](screenshots/tampilan-awal.jpeg)
