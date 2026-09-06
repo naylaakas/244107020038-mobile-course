@@ -3,7 +3,7 @@
 | NIM |  244107020038|
 | Nama |  Nayla Akas Oktavia |
 | Kelas | TI - 3H |
-| Repository | [link] () |
+| Repository | [link] (https://github.com/naylaakas/244107020038-mobile-course/tree/main/02-week-2-declarative-ui-responsive-design) |
 
 # WEEK 2
 ## Declarative UI & Responsive Design
