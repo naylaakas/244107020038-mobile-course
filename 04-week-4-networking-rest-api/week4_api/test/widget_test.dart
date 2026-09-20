@@ -1,30 +1,44 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:week4_api/main.dart';
+import 'package:week4_api/data/comment_feature.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('Comment Model Tests', () {
+    // Verifikasi fromJson aman ketika field bernilai null atau hilang
+    test('fromJson aman ketika field bernilai null atau hilang sama sekali', () {
+      final Map<String, dynamic> jsonRusak = {
+        'postId': null,
+        // 'id' dihilangkan sama sekali dari map
+        'name': null,
+        // 'email' dihilangkan sama sekali dari map
+        'body': null,
+      };
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      final comment = Comment.fromJson(jsonRusak);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+      expect(comment.postId, 0);
+      expect(comment.id, 0);
+      expect(comment.name, '');
+      expect(comment.email, '');
+      expect(comment.body, '');
+    });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // EDGE CASE SENDIRI: Menguji tipe data angka yang dikirim API berupa format double/desimal
+    // Kasus nyata: parser backend kadang mengirim ID angka sebagai format float/double 
+    test('Edge case: fromJson aman menerima angka bertipe double tanpa crash', () {
+      final Map<String, dynamic> jsonDouble = {
+        'postId': 42.0,
+        'id': 105.0,
+        'name': 'Budi Santoso',
+        'email': 'budi@example.com',
+        'body': 'Komentar pengujian edge case',
+      };
+
+      final comment = Comment.fromJson(jsonDouble);
+
+      // Verifikasi konversi num?.toInt() berhasil tanpa melempar TypeError
+      expect(comment.postId, 42);
+      expect(comment.id, 105);
+      expect(comment.name, 'Budi Santoso');
+    });
   });
 }

@@ -4,6 +4,8 @@ import 'dart:async';
 import 'api_client.dart';
 import 'models/post.dart';
 import 'repositories/post_repository.dart';
+import 'paged_posts.dart';
+export 'network_errors.dart';
 
 final dioProvider = Provider<Dio>((ref) => createDio());
 
@@ -74,25 +76,24 @@ Future<Object?> readPostsErrorOnce(ProviderContainer container) {
   return completer.future.whenComplete(sub.close);
 }
 
-String friendlyErrorMessage(Object error) {
-  if (error is DioException) {
-    switch (error.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
-        return 'Koneksi lambat atau timeout. Periksa internet Anda lalu coba lagi.';
-      case DioExceptionType.connectionError:
-        return 'Tidak dapat terhubung ke server. Periksa internet Anda.';
-      case DioExceptionType.badResponse:
-        final code = error.response?.statusCode;
-        if (code == 404) return 'Data tidak ditemukan (404).';
-        if (code == 401 || code == 403) {
-          return 'Akses ditolak ($code). Periksa kredensial Anda.';
-        }
-        return 'Server bermasalah ($code). Coba lagi nanti.';
-      default:
-        return 'Terjadi kesalahan jaringan. Coba lagi.';
-    }
-  }
-  return 'Terjadi kesalahan tak terduga: $error';
-}
+final postDetailProvider = FutureProvider.autoDispose.family<Post, int>((ref, id) async {
+  // 1. Cek apakah sudah pernah termuat di postListProvider
+  final listPosts = ref.watch(postListProvider).value;
+  final foundInList = listPosts?.cast<Post?>().firstWhere(
+        (p) => p?.id == id,
+        orElse: () => null,
+      );
+  if (foundInList != null) return foundInList;
+
+  // 2. Cek apakah ada di pagedPostsProvider
+  final pagedPosts = ref.watch(pagedPostsProvider).items;
+  final foundInPaged = pagedPosts.cast<Post?>().firstWhere(
+        (p) => p?.id == id,
+        orElse: () => null,
+      );
+  if (foundInPaged != null) return foundInPaged;
+
+  // 3. Jika langsung dibuka via URL/refresh, fetch lewat repository
+  final repository = ref.watch(postRepositoryProvider);
+  return repository.fetchPostById(id);
+});
