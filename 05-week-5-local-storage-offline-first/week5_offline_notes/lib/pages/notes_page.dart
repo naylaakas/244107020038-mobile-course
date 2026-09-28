@@ -1,19 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:week5_offline_notes/data/local/note.dart';
-import 'package:week5_offline_notes/data/repositories/note_repository.dart';
-import 'post_page.dart';
-import 'settings_page.dart';
+import 'package:go_router/go_router.dart';
 
-final noteRepositoryProvider = Provider((ref) => NoteRepository());
-
-final notesProvider = FutureProvider<List<Note>>((ref) async {
-  return ref.watch(noteRepositoryProvider).fetchNotes();
-});
-
-final dirtyCountProvider = FutureProvider<int>((ref) async {
-  return ref.watch(noteRepositoryProvider).countDirty();
-});
+import '../data/repositories/note_repository.dart';
+import '../widgets/note_tile.dart';
 
 class NotesPage extends ConsumerWidget {
   const NotesPage({super.key});
@@ -27,17 +17,12 @@ class NotesPage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Catatan Offline'),
         actions: [
-          // Tombol untuk membuka Halaman Posts API
           IconButton(
             icon: const Icon(Icons.article_outlined),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PostsPage()),
-              );
+              context.push('/posts');
             },
           ),
-          // Badge Indikator Status Sync
           dirtyCountAsync.when(
             data: (count) => Badge(
               label: Text('$count'),
@@ -47,14 +32,18 @@ class NotesPage extends ConsumerWidget {
                 onPressed: () async {
                   final repo = ref.read(noteRepositoryProvider);
                   final countDirty = await repo.countDirty();
+
                   if (countDirty > 0) {
                     await repo.markAllSynced();
                     ref.invalidate(notesProvider);
                     ref.invalidate(dirtyCountProvider);
+
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('$countDirty catatan berhasil disinkronkan'),
+                          content: Text(
+                            '$countDirty catatan berhasil disinkronkan',
+                          ),
                         ),
                       );
                     }
@@ -63,16 +52,12 @@ class NotesPage extends ConsumerWidget {
               ),
             ),
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
-          // Tombol Ikon Gear untuk Buka Pengaturan
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
-              );
+              context.push('/settings');
             },
           ),
           const SizedBox(width: 8),
@@ -85,38 +70,35 @@ class NotesPage extends ConsumerWidget {
               child: Text('Belum ada catatan.'),
             );
           }
+
           return ListView.builder(
             itemCount: notes.length,
             itemBuilder: (context, index) {
               final note = notes[index];
-              return ListTile(
-                title: Text(note.title),
-                subtitle: Text(
-                  note.body.isNotEmpty ? note.body : 'Tidak ada isi',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (note.dirty)
-                      const Icon(Icons.sync_problem, color: Colors.orange, size: 20),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
-                      onPressed: () async {
-                        await ref.read(noteRepositoryProvider).deleteNote(note.id!);
-                        ref.invalidate(notesProvider);
-                        ref.invalidate(dirtyCountProvider);
-                      },
-                    ),
-                  ],
-                ),
+
+              return NoteTile(
+                note: note,
+                onTap: () {
+                  context.push('/note/${note.id}');
+                },
+                onDelete: () async {
+                  await ref
+                      .read(noteRepositoryProvider)
+                      .deleteNote(note.id!);
+
+                  ref.invalidate(notesProvider);
+                  ref.invalidate(dirtyCountProvider);
+                },
               );
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Terjadi kesalahan: $err')),
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (err, stack) => Center(
+          child: Text('Terjadi kesalahan: $err'),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddNoteDialog(context, ref),
@@ -125,7 +107,10 @@ class NotesPage extends ConsumerWidget {
     );
   }
 
-  void _showAddNoteDialog(BuildContext context, WidgetRef ref) {
+  void _showAddNoteDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     final titleController = TextEditingController();
     final bodyController = TextEditingController();
 
@@ -138,11 +123,15 @@ class NotesPage extends ConsumerWidget {
           children: [
             TextField(
               controller: titleController,
-              decoration: const InputDecoration(labelText: 'Judul'),
+              decoration: const InputDecoration(
+                labelText: 'Judul',
+              ),
             ),
             TextField(
               controller: bodyController,
-              decoration: const InputDecoration(labelText: 'Isi Catatan'),
+              decoration: const InputDecoration(
+                labelText: 'Isi Catatan',
+              ),
             ),
           ],
         ),
@@ -158,9 +147,13 @@ class NotesPage extends ConsumerWidget {
                       title: titleController.text.trim(),
                       body: bodyController.text.trim(),
                     );
+
                 ref.invalidate(notesProvider);
                 ref.invalidate(dirtyCountProvider);
-                if (dialogContext.mounted) Navigator.pop(dialogContext);
+
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                }
               }
             },
             child: const Text('Simpan'),

@@ -2,61 +2,64 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:sqflite/sqflite.dart';
 import '../local/db.dart';
-import '../local/post.dart';
+
+class Post {
+  final int id;
+  final String title;
+  final String body;
+
+  Post({required this.id, required this.title, required this.body});
+
+  factory Post.fromJson(Map<String, dynamic> json) => Post(
+        id: json['id'] as int,
+        title: json['title'] as String? ?? '',
+        body: json['body'] as String? ?? '',
+      );
+}
 
 class PostRepository {
-  PostRepository({
-    Future<Database> Function()? openDb,
-    Dio? dio,
-  })  : _openDb = openDb ?? openNotesDb,
-        _dio = dio ?? Dio();
+  final Dio _dio = Dio();
 
-  final Future<Database> Function() _openDb;
-  final Dio _dio;
-
+  // Membaca data cache dari tabel cached_posts
   Future<List<Post>> readCachedPosts() async {
-    final db = await _openDb();
+    final db = await openNotesDb();
     final rows = await db.query('cached_posts');
     return rows.map((row) {
-      final payload = row['payload'] as String;
-      final map = jsonDecode(payload) as Map<String, dynamic>;
-      return Post.fromMap(map);
+      final payload = jsonDecode(row['payload'] as String);
+      return Post.fromJson(payload);
     }).toList();
   }
 
-  Future<void> savePostsToCache(List<Post> posts) async {
-    final db = await _openDb();
-    final batch = db.batch();
-    batch.delete('cached_posts');
-    for (final post in posts) {
-      batch.insert('cached_posts', {
-        'id': post.id,
-        'payload': jsonEncode({'id': post.id, 'title': post.title, 'body': post.body}),
-        'cached_at': DateTime.now().toIso8601String(),
-      });
+  // Ambil data baru dari API & simpan ke SQLite di background
+  Future<void> refreshPostsInBackground() async {
+    try {
+      final response = await _dio.get('https://jsonplaceholder.typicode.com/posts');
+      if (response.statusCode == 200) {
+        final List data = response.data;
+        final db = await openNotesDb();
+        final batch = db.batch();
+        for (var item in data) {
+          batch.insert(
+            'cached_posts',
+            {
+              'id': item['id'],
+              'payload': jsonEncode(item),
+              'cached_at': DateTime.now().toIso8601String(),
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+        await batch.commit(noResult: true);
+      }
+    } catch (_) {
+      // Jika offline, abaikan error agar aplikasi tetap pakai data cache
     }
-    await batch.commit(noResult: true);
   }
 
-  Future<List<Post>> loadPostsCacheFirst({
-    Function()? onRefreshed,
-    bool forceOffline = false,
-  }) async {
-    final cached = await readCachedPosts();
-    if (forceOffline) {
-      return cached;
-    }
-    
-    _dio.get('https://jsonplaceholder.typicode.com/posts').then((response) async {
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        final posts = data.map((json) => Post.fromMap(json as Map<String, dynamic>)).toList();
-        await savePostsToCache(posts);
-        if (onRefreshed != null) onRefreshed();
-      }
-    }).catchError((_) {
-  });
-
-    return cached;
+  // --- KODE UTAMA JOBSHEET ---
+  Future<List<Post>> loadPostsCacheFirst() async {
+    final cached = await readCachedPosts(); // 1. Ambil cache lokal seketika
+    refreshPostsInBackground();              // 2. Fetch Dio di background
+    return cached;                           // 3. Kembalikan cache agar UI tidak blank
   }
 }

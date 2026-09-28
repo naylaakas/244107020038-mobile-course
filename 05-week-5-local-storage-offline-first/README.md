@@ -3,7 +3,7 @@
 | NIM |  244107020038|
 | Nama |  Nayla Akas Oktavia |
 | Kelas | TI - 3H |
-| Repository | [link] () |
+| Repository | [link] (https://github.com/naylaakas/244107020038-mobile-course/tree/main/05-week-5-local-storage-offline-first) |
 
 # WEEK 5
 ## Local Storage & Offline First
@@ -120,28 +120,36 @@ seperti tema aplikasi
 ### Refactoring  
 
 1. Ekstrak baris catatan menjadi widget NoteTile tersendiri yang menampilkan badge "belum tersinkron" bila dirty == true.
-
-
 2. Pindahkan logika cache posts dan syncNotes ke file lib/data/sync.dart agar repository tetap fokus pada CRUD.
-
-
 3. Tambahkan halaman detail catatan dengan GoRouter (/note/:id) yang membaca dari repository lokal, bukan dari state halaman list.
 
 ### Testing: unit test model + mock repository
 
-![screenshot](screenshots)
+![screenshot](screenshots/analyze-test.png)
 
 ![screenshot](screenshots/checklist.png)
 
 ### Tugas
 
-![screenshot](screenshots)
+- tema terang
 
-![screenshot](screenshots)
+![screenshot](screenshots/new-sdh-sync.jpeg)
 
-![screenshot](screenshots)
+- tema gelap
 
-![screenshot](screenshots)
+![screenshot](screenshots/new-blm-sync.jpeg)
+
+- sebelum sync
+
+![screenshot](screenshots/new-blm-sync.jpeg)
+
+- sesudah sync
+
+![screenshot](screenshots/new-sdh-sync.jpeg)
+
+- detail catatan
+
+![screenshot](screenshots/detail-catatan.jpeg)
 
 ### Refleksi 
 
@@ -155,3 +163,4 @@ seperti tema aplikasi
     Dirty flag menandai data yang belum tersinkronisasi, lalu sync dilakukan secara asynchronous agar UI tidak terblokir. Outbox diperlukan jika banyak perubahan harus diantrikan dan dijamin tidak hilang.
 
 4. Bagian mana dari rekomendasi AI yang Anda tolak, dan mengapa?
+    Saya menolak rekomendasi AI yang menyarankan penambahan blok try-catch manual di dalam FutureProvider. Alasannya, hal tersebut menelan exception asli, membuat unit test gagal, dan memicu timeout.

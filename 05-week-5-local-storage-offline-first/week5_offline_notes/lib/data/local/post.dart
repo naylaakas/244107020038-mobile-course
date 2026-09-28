@@ -1,25 +1,27 @@
 class Post {
-  final int id;
-  final String title;
-  final String body;
-
   const Post({
     required this.id,
     required this.title,
     required this.body,
   });
 
-  Map<String, Object?> toMap() => {
-        'id': id,
-        'title': title,
-        'body': body,
-      };
+  final int id;
+  final String title;
+  final String body;
 
-  factory Post.fromMap(Map<String, Object?> map) {
+  factory Post.fromJson(Map<String, dynamic> json) {
     return Post(
-      id: (map['id'] as num?)?.toInt() ?? 0,
-      title: map['title'] as String? ?? '',
-      body: map['body'] as String? ?? '',
+      id: (json['id'] as num).toInt(),
+      title: json['title'] as String? ?? '',
+      body: json['body'] as String? ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'body': body,
+    };
   }
 }

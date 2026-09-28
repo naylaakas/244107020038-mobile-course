@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../data/local/post.dart';
-import '../data/repositories/post_repository.dart';
+import '../data/sync.dart';
+import 'settings_page.dart';
 
-final postRepositoryProvider = Provider((ref) => PostRepository());
-
-// Provider untuk mengambil data posts dengan alur Cache-First
 final postsProvider = FutureProvider<List<Post>>((ref) async {
-  final repo = ref.watch(postRepositoryProvider);
-  return repo.loadPostsCacheFirst(
-    onRefreshed: () {
-      // Refresh UI saat data baru selesai diunduh dari background
-      ref.invalidateSelf();
-    },
+  final forceOffline = ref.watch(forceOfflineProvider);
+
+  return loadPostsCacheFirst(
+    forceOffline: forceOffline,
   );
 });
 
@@ -29,7 +26,9 @@ class PostsPage extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(postsProvider),
+            onPressed: () {
+              ref.invalidate(postsProvider);
+            },
           ),
         ],
       ),
@@ -40,10 +39,12 @@ class PostsPage extends ConsumerWidget {
               child: Text('Belum ada data cache posts.'),
             );
           }
+
           return ListView.builder(
             itemCount: posts.length,
             itemBuilder: (context, index) {
               final post = posts[index];
+
               return ListTile(
                 leading: CircleAvatar(
                   child: Text('${post.id}'),
@@ -62,8 +63,12 @@ class PostsPage extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Terjadi kesalahan: $err')),
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (err, stack) => Center(
+          child: Text('Terjadi kesalahan: $err'),
+        ),
       ),
     );
   }

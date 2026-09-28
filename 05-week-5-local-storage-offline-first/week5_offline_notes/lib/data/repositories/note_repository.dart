@@ -1,6 +1,22 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite/sqflite.dart';
+
 import '../local/db.dart';
 import '../local/note.dart';
+
+final noteRepositoryProvider = Provider<NoteRepository>((ref) {
+  return NoteRepository();
+});
+
+final notesProvider = FutureProvider<List<Note>>((ref) {
+  final repo = ref.watch(noteRepositoryProvider);
+  return repo.fetchNotes();
+});
+
+final dirtyCountProvider = FutureProvider<int>((ref) {
+  final repo = ref.watch(noteRepositoryProvider);
+  return repo.countDirty();
+});
 
 class NoteRepository {
   NoteRepository({Future<Database> Function()? openDb})
@@ -39,12 +55,30 @@ class NoteRepository {
 
   Future<int> countDirty() async {
     final db = await _openDb();
-    final rows = await db.rawQuery('SELECT COUNT(*) AS c FROM notes WHERE dirty = 1');
+    final rows =
+        await db.rawQuery('SELECT COUNT(*) AS c FROM notes WHERE dirty = 1');
     return ((rows.first['c'] as num?)?.toInt() ?? 0);
   }
 
   Future<void> markAllSynced() async {
     final db = await _openDb();
     await db.update('notes', {'dirty': 0}, where: 'dirty = 1');
+  }
+
+  Future<Note?> fetchNoteById(int id) async {
+    final db = await _openDb();
+
+    final rows = await db.query(
+      'notes',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (rows.isEmpty) {
+      return null;
+    }
+
+    return Note.fromMap(rows.first);
   }
 }
