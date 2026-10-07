@@ -54,13 +54,13 @@ Aplikasi menangani notifikasi push dengan tipe gabungan (`notification` + `data`
 
 ![Halaman Beranda](screenshots/home.jpeg)
 
+![Halaman Pengumuman](screenshots/announcement.jpeg)
+
 ![Notif Background](screenshots/notif-bg.jpeg)
 
 ![Notif Foreground](screenshots/notif-fg.jpeg)
 
 ![Notif Terminated](screenshots/terminated.jpeg)
-
-![Halaman Pengumuman](screenshots/announcement.jpeg)
 
 ---
 
