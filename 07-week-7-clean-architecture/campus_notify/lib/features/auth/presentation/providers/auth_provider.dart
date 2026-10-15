@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../data/auth_repository.dart';
-import '../data/token_store.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../../../../core/token_store.dart';
 
 final tokenStoreProvider = Provider<TokenStore>((ref) {
   return TokenStore();

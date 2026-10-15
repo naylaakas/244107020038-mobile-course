@@ -5,158 +5,121 @@
 | Kelas | TI - 3H |
 | Repository | [link]() |
 
-# WEEK 6
-## Authentication, Security & FCM
+# WEEK 7
+## Clean Architecture
 
+### Praktikum 1 — Audit layer project lama
 
-### Praktikum 1 — Login + Secure Storage + Token Refresh
+1. Petakan file ke layer
 
-Pada praktikum ini, dibangun sistem otentikasi menggunakan pola repository dan Riverpod dengan keamanan token terstandarisasi:
-1. **Penyimpanan Aman (`lib/data/token_store.dart`)**: Access token dan Refresh token disimpan menggunakan `flutter_secure_storage` (KeyStore pada Android / Keychain pada iOS) dan tidak pernah disimpan pada `SharedPreferences` yang tidak terenkripsi.
-2. **Repository Autentikasi (`lib/data/auth_repository.dart`)**: Simulasi autentikasi JWT dengan fungsi login tervalidasi dan perpanjangan sesi token via `refresh()`.
-3. **Dio Interceptor Auto-Refresh (`lib/data/api_client.dart`)**: Interceptor secara otomatis menyisipkan header `Authorization: Bearer <token>` pada setiap request. Jika server merespons dengan status HTTP `401 Unauthorized`, interceptor melakukan token refresh sebanyak satu kali dan mengulang (*retry*) request asli secara transparan. Bila refresh token kadaluwarsa, seluruh sesi dibersihkan untuk memaksa login ulang.
-4. **Navigasi Guard (`lib/main.dart`)**: GoRouter mengamankan rute sehingga pengguna yang belum terautentikasi otomatis diarahkan ke rute `/login`.
-
-![Create Project](screenshots/create.png)
-
-![Struktur Proyek](screenshots/struktur.png)
-
-![Halaman Login](screenshots/login.jpeg)
-
----
-
-### Praktikum 2 — FCM, Permission, dan Token Lifecycle
-
-Pada praktikum ini, integrasi Firebase Cloud Messaging diimplementasikan pada `lib/messaging/push_service.dart`:
-1. **Inisialisasi Firebase**: Dipanggil sebelum aplikasi dijalankan dengan `Firebase.initializeApp()`. Berkas konfigurasi `google-services.json` telah ditempatkan pada `android/app/`.
-2. **Izin Notifikasi Runtime**: Menggunakan `FirebaseMessaging.instance.requestPermission()`. Pada Android 13+ (API 33+), ini memicu prompt runtime permission `POST_NOTIFICATIONS`. Pada iOS, meminta otorisasi APNs (alert, badge, sound).
-3. **Token Lifecycle**:
-   - `getToken()` mengambil registration token perangkat saat startup.
-   - `onTokenRefresh` memantau pembaruan token (misal setelah instal ulang atau rotasi keamanan) dan mengirim token terbaru ke backend callback.
-   - Token pada antarmuka aplikasi disamarkan (`maskToken()`, misal: `c7F9x0192837...`) sesuai prinsip OWASP Mobile Security agar tidak bocor pada screenshot maupun berkas log rilis.
-4. **Topic Messaging**: Mendaftarkan perangkat ke topik broadcast kampus `pengumuman-kampus`.
+| File | Layer saat ini | Masalah / Catatan |
+| :--- | :--- | :--- |
+| `pages/home_page.dart` | presentation | Memanggil `ref.read(authStateProvider.notifier).logout()` dan navigasi `context.go()` langsung di UI. Belum memisahkan logika event handler. |
+| `pages/login_page.dart` | presentation | Pengelolaan `TextEditingController`, penanganan state loading/error, dan eksekusi `login()` dilakukan langsung di dalam widget. |
+| `pages/announcement_page.dart` | presentation | Menampilkan UI detail pengumuman statis berbasis `id` tanpa integrasi fetching data via repository. |
+| `data/api_client.dart` | data | OK bila hanya dipakai repository, bukan widget. |
+| `providers/auth_provider.dart` | presentation (state) | OK bila hanya memanggil repository/use case. Namun saat ini masih melakukan instansiasi langsung kelas `AuthRepository()` dan `TokenStore()`. |
+| `data/auth_repository.dart` | data (+kontrak tercampur) | Interface dan implementasi masih satu kelas. Masih menggunakan *mock data* dummy. |
+| `data/token_store.dart` | data / infrastructure | Mengelola penyimpanan token langsung menggunakan `FlutterSecureStorage`. |
+| `data/api_errors.dart` | data / presentation helper | Memetakan exception `DioException` ke pesan teks yang ramah pengguna (*user-friendly*). |
+| `messaging/push_service.dart` | infrastructure / data | Menggabungkan logika FCM, local notification, dan parsing rute. |
+| `routes.dart` | presentation (routing) | Menyatukan konfigurasi rute `GoRouter` dan helper parsing payload FCM `routeFromMessage`. |
+| `main.dart` | application / entry point | Menangani inisialisasi Firebase, FCM background handler, setup `GoRouter`, dan pendaftaran provider root. |
 
 ---
 
-### Praktikum 3 — Payload, Tiga App State, Klik dan Topik
+2. Tandai tiga pelanggaran klasik
 
-Aplikasi menangani notifikasi push dengan tipe gabungan (`notification` + `data` payload):
-- `notification`: Berisi `title` dan `body` untuk pesan yang ditampilkan ke pengguna.
-- `data`: Berisi `route` dan `id` (misal: `{"route": "/pengumuman/3", "id": "3"}`) untuk pengalihan deep link.
+![screenshot](screenshots/pelanggaran-klasik.png)
 
-#### Matriks Pengujian Tiga App State
+3. Struktur target
 
-| State | Yang Diharapkan | Mekanisme Handler | Hasil Verifikasi |
-|---|---|---|---|
-| **Foreground** (Aplikasi sedang dibuka) | Banner lokal muncul di layar, saat diklik masuk ke `/pengumuman/3` | `FirebaseMessaging.onMessage` + `flutter_local_notifications` | Berhasil (banner lokal muncul & deep link aktif) |
-| **Background** (Aplikasi di-minimize) | Banner sistem OS muncul otomatis, saat diklik membuka aplikasi ke `/pengumuman/3` | Notifikasi sistem OS + `FirebaseMessaging.onMessageOpenedApp` | Berhasil (navigasi langsung ke detail pengumuman) |
-| **Terminated** (Aplikasi dimatikan penuh) | Banner sistem OS muncul, saat diklik membuka aplikasi dan masuk ke `/pengumuman/3` | `FirebaseMessaging.instance.getInitialMessage()` + `pendingDeepLink` | Berhasil (cold-start deep linking berjalan) |
+![screenshot](screenshots/struktur.png)
 
-![Halaman Beranda](screenshots/home.jpeg)
+### Praktikum 2 — Domain dan data per fitur
 
-![Halaman Pengumuman](screenshots/announcement.jpeg)
+1. Buat lib/features/notes/domain/entities/note.dart. Tanpa import Flutter, tanpa mapping
+2. Buat lib/core/failures.dart dan lib/features/notes/domain/repositories/note_repository.dart
+3. Buat lib/features/notes/data/models/note_model.dart (mapping hanya di sini) dan note_repository_impl.dart
+4. Buat lib/features/notes/domain/usecases/get_notes.dart
 
-![Notif Background](screenshots/notif-bg.jpeg)
+### Praktikum 3 — Presentation, DI, dan verifikasi
 
-![Notif Foreground](screenshots/notif-fg.jpeg)
+1. Buat lib/features/notes/presentation/providers/notes_providers.dart. Inilah satu-satunya tempat wiring
+2. notes_page.dart versi bersih tidak mengandung SQL, Dio, JSON, atau formatting tanggal mentah
+3. Jalankan tiga pemeriksaan, semua harus lolos
 
-![Notif Terminated](screenshots/terminated.jpeg)
-
----
+![screenshot](screenshots/verif-dependency.png)
 
 ### AI Challenge
 
-**Poin Evaluasi Kritis Terhadap Draf AI:**
-- Background handler wajib berupa fungsi top-level global dengan anotasi `@pragma('vm:entry-point')`, bukan method kelas.
-- Listener `onTokenRefresh` harus meneruskan token ke backend (`onToken`), bukan hanya mencetak ke log.
-- State foreground membutuhkan local notification manual melalui plugin `flutter_local_notifications` karena OS tidak menampilkan banner secara otomatis saat aplikasi aktif.
-- Background isolate dilarang keras mengakses `BuildContext` atau Riverpod container.
-- Registration token disamarkan (masking) agar mematuhi standar privasi OWASP Mobile Top 10.
+1. Prompt yang dikirimkan ke AI Assistant:
+>  Project Flutter saya: campus_notify (auth + FCM + daftar pengumuman).
+> Kondisi kini: folder lib/{data, providers, pages, messaging}, repository tercampur dengan implementasi, widget memanggil Dio langsung.
+> Tugas:
+> 1. Usulkan struktur feature-first Clean Architecture (presentation/domain/data) untuk fitur auth + announcements.
+> 2. Untuk tiap file lama, sebutkan tujuan barunya (pindah/pecah/hapus).
+> 3. Tandai bagian yang over-engineering bila diterapkan ke CRUD sederhana, dan kapan use case benar-benar dibutuhkan vs repository langsung.
+> 4. Tunjukkan wiring DI dengan Riverpod (tanpa package DI tambahan).
+> Jelaskan trade-off setiap keputusan.
 
----
+2. Tabel Usulan AI vs Keputusan Final
+
+| Usulan AI / Aspek | Keputusan Final Kita | Alasan Teknis & Trade-off |
+| :--- | :--- | :--- |
+| **Pemisahan Interface & Impl** | **Diterima** | `auth_repository.dart` ditaruh di `domain/repositories/` (interface) dan `auth_repository_impl.dart` di `data/repositories/` agar domain steril dari detail infrastruktur. |
+| **Penggunaan Use Case** | **Disederhanakan (Ditolak untuk CRUD Sederhana)** | Untuk fitur `announcements` dan `auth` yang berbasis pass-through/CRUD sederhana, Notifier langsung memanggil Repository tanpa Use Case untuk menghindari *over-engineering* dan file boilerplate berlebih. |
+| **Wiring Dependency Injection** | **Diterima (Riverpod Native)** | Memanfaatkan `Provider<Repository>` murni dari Riverpod untuk meng-inject dependency tanpa perlu library DI tambahan seperti `get_it`. |
+| **Lokasi Helper Database (`openDb`)** | **Disederhanakan** | Fungsi pembuka DB ditaruh langsung di kelas `note_repository_impl.dart` pada layer `data` alih-alih membuat file terpisah `db.dart` agar struktur folder tetap ringkas. |
+
+3.  AI Verification Checklist
+
+* [x] **Interface Repository di `domain` & Implementasi di `data`**:
+  - Interface: `lib/features/auth/domain/repositories/auth_repository.dart`
+  - Implementasi: `lib/features/auth/data/repositories/auth_repository_impl.dart`
+* [x] **Layer `domain` Bebas Framework/Library**:
+  - Diperiksa menggunakan PowerShell, tidak ada import `flutter`, `dio`, `sqflite`, atau `firebase` di dalam folder `domain`.
+* [x] **Bebas Over-Engineering Use Case**:
+  - Operasi CRUD satu-baris langsung ditangani dari Notifier ke Repository (UI -> Notifier -> Repository)
+* [x] **Entity Bebas Mapping**:
+  - Fungsi `toMap()` / `fromMap()` hanya ada pada `NoteModel` (`data/models`), bukan pada `Note` entity (`domain/entities`)
+* [x] **Wiring DI Terpusat di Provider**:
+  - Widget UI tidak melakukan instansiasi `new AuthRepository()`, melainkan membaca via `ref.watch(authRepositoryProvider)`
 
 ### Refactoring
 
-Tiga perbaikan arsitektural yang berhasil diimplementasikan:
+1. Terapkan pola yang sama ke fitur kedua (auth atau announcements): entity + repository interface + impl + 1 use case + provider wiring. Jangan biarkan satu fitur bersih dan sisanya kotor.
+2. Ekstrak formatting tanggal dan parsing rute ke fungsi murni di lib/core/format.dart agar bisa diuji tanpa widget.
+3. Pindahkan semua exception mentah menjadi Failure yang ramah pengguna sebelum mencapai UI; UI hanya menerima message.
 
-1. **Konstanta Rute Terpusat (`lib/routes.dart`)**:  
-   Memindahkan semua string rute (`/login`, `/`, `/pengumuman/:id`) ke konstanta `AppRoutes` agar deep link dari FCM dan definisi GoRouter selalu konsisten dan bebas typo.
-2. **Ekstraksi Parsing Rute Murni (`routeFromMessage`)**:  
-   Mengekstrak fungsi pemetaan `RemoteMessage.data -> route` menjadi fungsi murni (*pure function*) yang fleksibel (menangani slash di awal, data kosong, dan fallback `id`) sehingga dapat diuji menggunakan unit test tanpa ketergantungan pada Firebase SDK.
-3. **Pemetaan Exception Ramah Pengguna (`lib/data/api_errors.dart`)**:  
-   Mengisolasi konversi `DioException` (401 Unauthorized, Connection Timeout, Offline, 500 Server Error) menjadi pesan bahasa Indonesia yang mudah dipahami pengguna, sehingga lapisan UI bersih dari exception mentah teknis.
+### Tugas
 
----
+![screenshot](screenshots/analyze-test.png)
 
-### Testing: Unit Test Model + Mock Repository
+![screenshot](screenshots/login.jpeg)
 
-Seluruh pengujian unit test dan analisis lint kode telah dieksekusi dan dinyatakan **100% lulus dan bersih**:
+![screenshot](screenshots/home.jpeg)
 
-- **Perintah Analisis Linter**:
-  ```bash
-  flutter analyze
-  # Output: No issues found!
-  ```
-- **Perintah Pengujian Unit**:
-  ```bash
-  flutter test
-  # Output: All 17 tests passed!
-  ```
-
-#### Rincian Pengujian (`test/auth_push_test.dart` & `test/widget_test.dart`):
-1. `routeFromMessage` menangani rute kosong dan tanpa leading slash.
-2. `routeFromMessage` menangani payload pembawa `id` dengan fallback yang benar.
-3. `routeFromMessage` menangani whitespace dan fallback ke root `/`.
-4. `ApiErrors` memetakan status code 401 ke pesan sesi berakhir.
-5. `ApiErrors` memetakan timeout ke pesan ramah pengguna.
-6. `ApiErrors` memetakan gangguan koneksi / offline ke instruksi periksa internet.
-7. `ApiErrors` memetakan status 500 ke pesan gangguan server kampus.
-8. `ApiErrors` memetakan generic Exception tanpa prefix string exception.
-9. `AuthRepository` login berhasil mengembalikan session berisi access & refresh token.
-10. `AuthRepository` login melempar exception bila format email atau kata sandi tidak valid.
-11. `AuthRepository` refresh mengembalikan token baru yang valid.
-12. `AuthRepository` refresh melempar exception bila refresh token kosong.
-13. `maskToken` menyamarkan token panjang (>12 karakter) menjadi format aman (`...`).
-14. `maskToken` membiarkan token pendek tetap utuh.
-15. Auth Provider membaca status login dari ketersediaan access token.
-16. Kegagalan refresh token membersihkan sesi (memaksa user login kembali).
-17. Widget smoke test aplikasi Campus Notify berhasil ter-render dengan `ProviderScope`.
-
----
-
-### Tugas / Mini Project
-
-Aplikasi **Campus Notification App** telah dikembangkan secara lengkap dengan cakupan fitur:
-- [x] Login (Mock JWT / Auth Repository) dengan route guard GoRouter.
-- [x] Secure storage untuk access & refresh token via `FlutterSecureStorage`.
-- [x] Dio interceptor dengan auto-refresh 1 kali saat 401 dan logout saat refresh mati.
-- [x] FCM Service lengkap: runtime permission (Android 13+ & iOS), token retrieval, lifecycle `onTokenRefresh`, dan topic messaging `pengumuman-kampus`.
-- [x] Dukungan 3 app states (Foreground banner lokal, Background click, Terminated launch) dengan deep link ke `/pengumuman/:id`.
-- [x] Kartu debug FCM token dengan penyamaran (*masking*) 12 karakter untuk mematuhi keamanan data.
-- [x] Refactoring terstruktur: `routes.dart`, `routeFromMessage()`, dan `api_errors.dart`.
-- [x] 17 Unit test lulus tanpa dependensi emulator/Firebase live.
-- [x] Dokumentasi komprehensif AI Challenge pada folder `docs/`.
-
----
+![screenshot](screenshots/announcement.jpeg)
 
 ### Refleksi
 
-1. **Mengapa refresh token tidak boleh disimpan di SharedPreferences? Apa risikonya bila bocor?**  
-   *Jawaban:* `SharedPreferences` menyimpan data dalam bentuk berkas XML/plaintext tanpa enkripsi di penyimpanan aplikasi. Pada perangkat Android yang di-root atau melalui backup perangkat yang tidak diamankan, isi `SharedPreferences` dapat dibaca dengan mudah oleh penyerang. Jika refresh token bocor, penyerang dapat meminta access token baru kapan saja ke server autentikasi dan membajak sesi akun pengguna tanpa perlu mengetahui kata sandi aslinya. Oleh karena itu, refresh token wajib disimpan di `FlutterSecureStorage` yang memanfaatkan enkripsi perangkat keras (Android Keystore dan iOS Keychain).
+1. Mengapa interface repository harus tinggal di domain, bukan di data? Apa yang rusak bila dibalik?
 
-2. **Apa yang rusak bila onTokenRefresh diabaikan selama satu semester perkuliahan?**  
-   *Jawaban:* Registration token FCM dapat berubah sewaktu-waktu oleh Firebase karena berbagai alasan (instalasi ulang aplikasi, restore data cadangan, penghapusan data aplikasi, atau rotasi keamanan otomatis dari Google). Jika listener `onTokenRefresh` diabaikan dan tidak mengirimkan token baru ke backend, server kampus akan terus mengirimkan push notification ke token lama yang sudah tidak valid (*stale/invalid registration token*). Akibatnya, mahasiswa tidak akan pernah menerima pengumuman penting (seperti perubahan jadwal kuliah atau ujian) sepanjang semester.
+   Domain adalah inti dari logika bisnis dan tidak boleh bergantung pada detail teknis (Database/Network/Framework). Jika dibalik (interface ditaruh di data), layer domain akan terikat pada layer data. Akibatnya, saat database atau library diganti, kode bisnis utama di domain akan ikut rusak dan sulit di-unit test secara independen.
 
-3. **Kapan memakai topik dan kapan memakai token perangkat? Beri contoh pesan kampus untuk masing-masing.**  
-   *Jawaban:*
-   - **Topic Messaging:** Digunakan untuk pesan yang bersifat *broadcast* satu arah kepada banyak pengguna sekaligus yang memiliki kesamaan minat atau kelompok tanpa perlu server mengelola daftar token individual.  
-     *Contoh:* Topik `pengumuman-kampus` untuk berita libur semester, atau topik `ti-angkatan-2024` untuk pengumuman jadwal KRS bersama.
-   - **Token Perangkat (Device Token):** Digunakan untuk pesan personal, rahasia, atau transaksional yang ditujukan spesifik hanya untuk satu akun pengguna tertentu.  
-     *Contoh:* Notifikasi tagihan pembayaran UKT mahasiswa, notifikasi nilai ujian individual, atau notifikasi persetujuan pengajuan surat bebas tanggungan.
+2. Kapan use case benar-benar dibutuhkan, dan kapan repository langsung ke notifier sudah cukup?
 
-4. **Bagian mana dari draf AI yang Anda tolak atau perbaiki, dan mengapa?**  
-   *Jawaban:*
-   - **Penolakan Method Background:** Menolak penempatan background handler di dalam class method `PushService`, dan memperbaikinya menjadi fungsi top-level global dengan `@pragma('vm:entry-point')` agar dapat dijalankan dengan aman pada background isolate tanpa error runtime.
-   - **Penolakan Hanya Logging `onTokenRefresh`:** Mengubah listener `onTokenRefresh` dari sekadar `print()` menjadi pemanggilan callback asinkronus `onToken(newToken)` agar token baru benar-benar terkirim dan tersinkronisasi ke basis data backend.
-   - **Penolakan Logging Token Lengkap:** Memperbaiki keluaran log dan UI yang mencetak registration token penuh dengan membuat fungsi pemangkas `maskToken(token)` (12 karakter + `...`), demi memenuhi standar keamanan OWASP Mobile Top 10 dan menjaga kerahasiaan token.
-   - **Pemisahan Navigasi & BuildContext:** Mengisolasi penanganan navigasi dari `BuildContext` dengan memanfaatkan rute murni (`routeFromMessage`) dan callback GoRouter yang dapat ditampung saat startup via `pendingDeepLink`.
+   - Butuh Use Case: Saat ada logika bisnis kompleks yang melibatkan gabungan beberapa repository, validasi data khusus, transformasi data, atau pembagian akses peran (roles).
+
+   - Cukup ke Notifier: Saat operasinya sebatas CRUD sederhana (Pass-Through) tanpa aturan bisnis tambahan, misal hanya mengambil list data mentah dari API/DB langsung ke UI.
+
+3. Apa biaya over-engineering (use case per CRUD satu-baris) bagi tim kecil? Kapan biayanya sepadan?
+
+   - Dampak/Biaya: Menambah jumlah file secara berlebihan (boilerplate code), memperlambat proses development, membuat alur pencarian kode rumit (harus buka banyak file hanya untuk 1 fungsi simpel), serta menambah beban maintenance.
+
+   - Sepadan Saat: Aplikasi diprediksi akan terus membesar, tim berkembang pesat, aturan bisnis sangat fleksibel dan sering berubah, atau saat membutuhkan cakupan unit test yang sangat ketat pada setiap aturan bisnis.
+
+4. Bagian mana dari usulan AI yang Anda tolak atau sederhanakan, dan mengapa?
+
+   Penambahan file terpisah untuk helper database (db.dart) atau pemisahan use case satu per satu untuk operasi CRUD yang sangat sederhana. Solusinya disederhanakan dengan menyatukan database opener langsung di kelas implementasi repository (note_repository_impl.dart) agar struktur folder tetap ringkas dan tidak memicu pembuatan file baru yang tidak perlu.

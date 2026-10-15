@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
 import 'package:campus_notify/routes.dart';
-import 'package:campus_notify/data/api_errors.dart';
-import 'package:campus_notify/data/auth_repository.dart';
+import 'package:campus_notify/core/api_errors.dart';
+import 'package:campus_notify/features/auth/domain/repositories/auth_repository.dart';
 import 'package:campus_notify/messaging/push_service.dart';
 
 class FakeTokenStore {
