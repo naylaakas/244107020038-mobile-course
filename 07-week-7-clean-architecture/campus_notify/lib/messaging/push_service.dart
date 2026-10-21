@@ -1,9 +1,11 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
+
 import '../routes.dart';
 
-final FlutterLocalNotificationsPlugin _local = FlutterLocalNotificationsPlugin();
+final FlutterLocalNotificationsPlugin _local =
+    FlutterLocalNotificationsPlugin();
 
 /// Menyimpan rute tertunda saat notifikasi diklik sebelum router siap.
 String? pendingDeepLink;
@@ -57,10 +59,7 @@ Future<void> initLocalNotifications({
   const ios = DarwinInitializationSettings();
 
   await _local.initialize(
-    settings: const InitializationSettings(
-      android: android,
-      iOS: ios,
-    ),
+    settings: const InitializationSettings(android: android, iOS: ios),
     onDidReceiveNotificationResponse: (response) {
       final payload = response.payload;
       if (payload != null && payload.isNotEmpty) {
@@ -82,7 +81,8 @@ Future<void> initLocalNotifications({
 
   final androidPlugin = _local
       .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+        AndroidFlutterLocalNotificationsPlugin
+      >();
 
   await androidPlugin?.createNotificationChannel(channel);
 }

@@ -21,10 +21,7 @@ class LoginUseCase {
       await repository.login(email: email, password: password);
       return (success: true, failure: null);
     } catch (e) {
-      return (
-        success: false,
-        failure: LocalFailure(e.toString()),
-      );
+      return (success: false, failure: LocalFailure(e.toString()));
     }
   }
 }
