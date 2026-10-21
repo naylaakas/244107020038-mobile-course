@@ -33,7 +33,7 @@
 
 ![screenshot](../screenshots/PR-kecil.png)
 
-2. Review sejawat 
+2. Review sejawat
 
 ![screenshot](../screenshots/review-sejawat.png)
 
@@ -66,21 +66,27 @@
 
 ### AI Challenge
 
-![screenshot](../screenshots/doc-ai.png)
+![screenshot](../screenshots/ci.png)
 
 ### Refleksi
 
 1. Apa beda LGTM buta dengan approve yang bertanggung jawab? Apa risikonya bagi tim?
 
-    LGTM buta asal klik approve tanpa meriksa kode. Approve bertanggung jawab memeriksa arsitektur, edge case, dan hasil test. Risikonya bug, pelanggaran arsitektur, dan crash lolos ke branch utama (develop/main)
+    Beda: LGTM buta asal klik approve tanpa meriksa kode. Approve bertanggung jawab memeriksa arsitektur, edge case, dan hasil test.   
+    
+    Risiko: Bug, pelanggaran arsitektur, dan crash lolos ke branch utama (develop/main). 
 
 2. Kapan komentar wajib berstatus request changes, dan kapan cukup saran?
 
-    Request Changes untuk blocker seperti crash, unhandled null, tes gagal, atau salah arsitektur. Cukup saran untuk hal minor seperti kerapian kode atau saran refactoring kecil.
-
+    Request Changes: Untuk blocker seperti crash, unhandled null, tes gagal, atau salah arsitektur.
+    
+    Cukup Saran: Untuk hal minor seperti kerapian kode atau saran refactoring kecil.   
+    
 3. Bagian mana dari review AI yang Anda tolak atau sederhanakan, dan mengapa?
 
-    Tuduhan impor library data di layer domain (halusinasi AI) dan saran formatting spasi. Alasannya layer domain sudah murni, dan formatting sudah ditangani otomatis oleh dart format/CI
+    Ditolak: Tuduhan impor library data di layer domain (halusinasi AI) dan saran formatting spasi.
+    
+    Alasan: Layer domain sudah murni, dan formatting sudah ditangani otomatis oleh dart format/CI. 
 
 4. Satu hal konkret yang Anda perbaiki setelah review sejawat — apa dampaknya?
 
