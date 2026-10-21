@@ -38,9 +38,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final auth = ref.watch(authStateProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
+      appBar: AppBar(title: const Text('Login')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -48,17 +46,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           children: [
             TextField(
               controller: emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-              ),
+              decoration: const InputDecoration(labelText: 'Email'),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: passwordController,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-              ),
+              decoration: const InputDecoration(labelText: 'Password'),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -67,10 +61,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   : () async {
                       await ref
                           .read(authStateProvider.notifier)
-                          .login(
-                            emailController.text,
-                            passwordController.text,
-                          );
+                          .login(emailController.text, passwordController.text);
                     },
               child: auth.isLoading
                   ? const CircularProgressIndicator()

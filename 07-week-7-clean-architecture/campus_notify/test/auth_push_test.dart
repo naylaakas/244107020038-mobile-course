@@ -9,7 +9,10 @@ class FakeTokenStore {
   String? access;
   String? refresh;
 
-  Future<void> save({required String newAccess, required String newRefresh}) async {
+  Future<void> save({
+    required String newAccess,
+    required String newRefresh,
+  }) async {
     access = newAccess;
     refresh = newRefresh;
   }
@@ -40,10 +43,16 @@ void main() {
       expect(routeFromMessage(dataWithOnlyId), '/pengumuman/42');
     });
 
-    test('routeFromMessage menangani whitespace dan fallback ke home jika null', () {
-      expect(routeFromMessage({'route': '   '}), '/');
-      expect(routeFromMessage({'route': '  pengumuman/99  '}), '/pengumuman/99');
-    });
+    test(
+      'routeFromMessage menangani whitespace dan fallback ke home jika null',
+      () {
+        expect(routeFromMessage({'route': '   '}), '/');
+        expect(
+          routeFromMessage({'route': '  pengumuman/99  '}),
+          '/pengumuman/99',
+        );
+      },
+    );
   });
 
   group('Refactoring Challenge: ApiErrors Pemetaan DioException Tests', () {
@@ -107,28 +116,34 @@ void main() {
   group('Praktikum 1: AuthRepository & Session Logic Tests', () {
     final repo = AuthRepository();
 
-    test('login berhasil mengembalikan session dengan access & refresh token', () async {
-      final session = await repo.login(
-        email: 'mahasiswa@polinema.ac.id',
-        password: 'password123',
-      );
+    test(
+      'login berhasil mengembalikan session dengan access & refresh token',
+      () async {
+        final session = await repo.login(
+          email: 'mahasiswa@polinema.ac.id',
+          password: 'password123',
+        );
 
-      expect(session.access, isNotEmpty);
-      expect(session.refresh, isNotEmpty);
-      expect(session.access, contains('mahasiswa@polinema.ac.id'));
-    });
+        expect(session.access, isNotEmpty);
+        expect(session.refresh, isNotEmpty);
+        expect(session.access, contains('mahasiswa@polinema.ac.id'));
+      },
+    );
 
-    test('login gagal jika email tidak memiliki @ atau password < 6 karakter', () async {
-      expect(
-        () => repo.login(email: 'invalid-email', password: 'password123'),
-        throwsException,
-      );
+    test(
+      'login gagal jika email tidak memiliki @ atau password < 6 karakter',
+      () async {
+        expect(
+          () => repo.login(email: 'invalid-email', password: 'password123'),
+          throwsException,
+        );
 
-      expect(
-        () => repo.login(email: 'valid@polinema.ac.id', password: '123'),
-        throwsException,
-      );
-    });
+        expect(
+          () => repo.login(email: 'valid@polinema.ac.id', password: '123'),
+          throwsException,
+        );
+      },
+    );
 
     test('refresh mengembalikan token baru yang valid', () async {
       final newToken = await repo.refresh('mock-refresh-token');
@@ -141,15 +156,18 @@ void main() {
   });
 
   group('Keamanan & Lifecycle Token Tests', () {
-    test('maskToken menyamarkan token dengan panjang lebih dari 12 karakter', () {
-      const fullToken = 'c7F9x0192837465fcmLongRegistrationTokenSecret12345';
-      final masked = maskToken(fullToken);
+    test(
+      'maskToken menyamarkan token dengan panjang lebih dari 12 karakter',
+      () {
+        const fullToken = 'c7F9x0192837465fcmLongRegistrationTokenSecret12345';
+        final masked = maskToken(fullToken);
 
-      expect(masked, startsWith('c7F9x0192837'));
-      expect(masked, endsWith('...'));
-      expect(masked.length, 15);
-      expect(masked, isNot(equals(fullToken)));
-    });
+        expect(masked, startsWith('c7F9x0192837'));
+        expect(masked, endsWith('...'));
+        expect(masked.length, 15);
+        expect(masked, isNot(equals(fullToken)));
+      },
+    );
 
     test('maskToken tidak memotong token jika panjang <= 12 karakter', () {
       expect(maskToken('short_token'), 'short_token');

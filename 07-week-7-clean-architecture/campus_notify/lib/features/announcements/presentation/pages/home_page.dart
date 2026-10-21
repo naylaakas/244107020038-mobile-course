@@ -16,9 +16,7 @@ class HomePage extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () async {
-              await ref
-                  .read(authStateProvider.notifier)
-                  .logout();
+              await ref.read(authStateProvider.notifier).logout();
             },
             icon: const Icon(Icons.logout),
           ),
@@ -29,26 +27,17 @@ class HomePage extends ConsumerWidget {
         children: [
           const Text(
             'Selamat datang',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 20),
 
           Card(
             child: ListTile(
-              title: const Text(
-                'Pengumuman',
-              ),
-              subtitle: const Text(
-                'Lihat pengumuman terbaru',
-              ),
+              title: const Text('Pengumuman'),
+              subtitle: const Text('Lihat pengumuman terbaru'),
               onTap: () {
-                context.go(
-                  AppRoutes.announcementDetails('1'),
-                );
+                context.go(AppRoutes.announcementDetails('1'));
               },
             ),
           ),

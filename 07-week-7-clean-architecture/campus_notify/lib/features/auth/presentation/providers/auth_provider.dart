@@ -32,10 +32,7 @@ class AuthNotifier extends AsyncNotifier<bool> {
 
       await ref
           .read(tokenStoreProvider)
-          .save(
-            access: session.access,
-            refresh: session.refresh,
-          );
+          .save(access: session.access, refresh: session.refresh);
 
       return true;
     });

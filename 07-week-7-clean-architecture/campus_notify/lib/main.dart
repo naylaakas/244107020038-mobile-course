@@ -76,11 +76,7 @@ void main() async {
     debugPrint('Firebase.initializeApp() Gagal: $e');
   }
 
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
@@ -107,19 +103,12 @@ class MyApp extends ConsumerWidget {
         return null;
       },
       routes: [
-        GoRoute(
-          path: AppRoutes.login,
-          builder: (_, _) => const LoginPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.home,
-          builder: (_, _) => const HomePage(),
-        ),
+        GoRoute(path: AppRoutes.login, builder: (_, _) => const LoginPage()),
+        GoRoute(path: AppRoutes.home, builder: (_, _) => const HomePage()),
         GoRoute(
           path: AppRoutes.announcement,
-          builder: (_, state) => AnnouncementPage(
-            id: state.pathParameters['id'] ?? '',
-          ),
+          builder: (_, state) =>
+              AnnouncementPage(id: state.pathParameters['id'] ?? ''),
         ),
         // Rute alternatif untuk kompatibilitas tautan bahasa Inggris
         GoRoute(
