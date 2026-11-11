@@ -131,3 +131,17 @@ void dispose() {
 - `flutter test` → **44/44 tests passed** ✅
 
 Detail lengkap: [docs/performance-findings.md](docs/performance-findings.md)
+
+## 6. Refleksi
+
+**Optimasi mana yang memberikan dampak terbesar?**
+Teknik 1 (const constructor + ekstraksi widget) dan Teknik 2 (tear-off) memberikan dampak terbesar karena langsung menyerang akar masalah INP yang tinggi (320 ms → 179 ms). Alokasi closure anonim per-render adalah sumber GC pressure tersembunyi yang sulit terdeteksi tanpa profiling.
+
+**Bagaimana memverifikasi bahwa optimasi benar-benar bekerja?**
+Verifikasi dilakukan dengan membandingkan data metrik kuantitatif dari DevTools Performance Panel sebelum dan sesudah optimasi pada skenario interaksi yang identik, bukan hanya "terasa lebih cepat". INP turun dari 320 ms ke 179 ms (44%) dan Scripting turun 31% merupakan bukti objektif yang dapat direproduksi.
+
+**Trade-off yang dihadapi?**
+Ekstraksi widget ke class terpisah meningkatkan jumlah file dan membuat kode lebih verbose. Ada pertimbangan antara keterbacaan kode (satu file panjang) vs performa (banyak class kecil yang const-cacheable). Pilihan jatuh pada performa karena dampaknya terukur signifikan.
+
+**Kapan optimasi premature sebaiknya dihindari?**
+Optimasi premature sebaiknya dihindari saat fitur belum stabil atau requirement masih berubah. Mengoptimasi kode yang belum jelas logika bisnisnya hanya membuang waktu dan mempersulit refaktor. Profiling terlebih dahulu — optimasi hanya pada bottleneck yang terbukti melalui data, bukan asumsi.
