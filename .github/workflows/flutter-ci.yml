@@ -37,6 +37,50 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Configure Gradle Maven Mirror
+        run: |
+          mkdir -p ~/.gradle/init.d
+          cat << 'EOF' > ~/.gradle/init.d/maven-mirror.gradle
+          def mirrorUrl = "https://maven-central.storage-download.googleapis.com/maven2"
+          allprojects {
+              buildscript {
+                  repositories {
+                      all { ArtifactRepository repo ->
+                          if (repo instanceof MavenArtifactRepository) {
+                              def u = repo.url.toString()
+                              if (u.startsWith("https://repo.maven.apache.org/maven2") || u.startsWith("https://repo1.maven.org/maven2")) {
+                                  repo.setUrl(mirrorUrl)
+                              }
+                          }
+                      }
+                  }
+              }
+              repositories {
+                  all { ArtifactRepository repo ->
+                      if (repo instanceof MavenArtifactRepository) {
+                          def u = repo.url.toString()
+                          if (u.startsWith("https://repo.maven.apache.org/maven2") || u.startsWith("https://repo1.maven.org/maven2")) {
+                              repo.setUrl(mirrorUrl)
+                          }
+                      }
+                  }
+              }
+          }
+          gradle.beforeSettings { settings ->
+              settings.pluginManagement.repositories {
+                  maven { url = uri(mirrorUrl) }
+                  all { ArtifactRepository repo ->
+                      if (repo instanceof MavenArtifactRepository) {
+                          def u = repo.url.toString()
+                          if (u.startsWith("https://repo.maven.apache.org/maven2") || u.startsWith("https://repo1.maven.org/maven2")) {
+                              repo.setUrl(mirrorUrl)
+                          }
+                      }
+                  }
+              }
+          }
+          EOF
+
       - name: Install Dependencies
         run: flutter pub get
 
