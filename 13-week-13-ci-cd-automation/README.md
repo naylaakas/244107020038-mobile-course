@@ -1,14 +1,11 @@
-# Week 13 – CI/CD Automation
-
-| Field | Value |
-|-------|-------|
+|  | Pemrograman Mobile |
+|--|--|
 | **NIM** | 244107020038 |
 | **Nama** | Nayla Akas Oktavia |
-| **Kelas** | TI-3H |
-| **Mata Kuliah** | Pemrograman Mobile |
-| **Topik** | CI/CD Automation dengan GitHub Actions |
+| **Kelas** | TI - 3H |
 
----
+# WEEK 13
+## CI/CD Automation
 
 ## Langkah 3 – Membuat Workflow CI Flutter
 
@@ -85,9 +82,12 @@ flutter test --coverage
 
 ### Screenshot – Pemeriksaan Lokal
 
-![Local Checks](screenshots/local-checks.png)
+#### `flutter analyze`
+![Flutter Analyze](screenshots/flutter-analyze.png)
 
----
+#### `flutter test`
+![Flutter Test](screenshots/flutter-test.png)
+
 
 ## Langkah 4 – Membangun dan Menyimpan APK/AAB
 
@@ -154,7 +154,6 @@ Gunakan tag seperti `v1.1.0` untuk menghubungkan source code, log pipeline, dan 
 > [!CAUTION]
 > Jangan menaruh keystore produksi pada workflow pull request. Gunakan workflow rilis terpisah yang dibatasi hanya berjalan pada branch utama atau tag rilis.
 
----
 
 ## Langkah 6 – Menjalankan dan Mengevaluasi Pipeline
 
@@ -179,16 +178,14 @@ Gunakan tag seperti `v1.1.0` untuk menghubungkan source code, log pipeline, dan 
 
 ![Actions Artifacts](screenshots/actions-artifacts.png)
 
----
 
 ## Tugas
 
 1. **Tambahkan workflow CI** ke project Flutter dengan format, analisis, dan test → selesai (`.github/workflows/flutter-ci.yml`).
 2. **Bangun APK dan AAB** serta simpan keduanya sebagai artefak → workflow menghasilkan `android-builds` yang dapat diunduh dari halaman Actions.
-3. **Jalankan workflow** melalui push ke branch `main`; commit pemicu: `feat(ci): Week 13 CI/CD pipeline with Flutter test and Android build`.
+3. **Jalankan workflow** melalui push ke branch `main`; commit pemicu yang berhasil (Run #10): `c015a95` (`fix(ci): upgrade Android Gradle Plugin to 9.1.1 for Flutter 3.50.1`).
 4. **Dokumentasi versi**: versi saat ini `1.1.0+2`, pemeriksaan yang dijalankan: format → analyze → test → build APK → build AAB, risiko keamanan yang masih perlu ditangani: signing key belum dikonfigurasi (perlu keystore di Secrets untuk rilis Play Store).
 
----
 
 ## Refleksi
 
@@ -201,6 +198,3 @@ Log step "Analyze Project (Linter)" dan "Run Tests" di tab Actions menunjukkan b
 **3. Bagian mana yang masih perlu persetujuan atau pemeriksaan manual sebelum rilis?**  
 Signing APK/AAB (keystore), pengujian di perangkat fisik, konfigurasi izin aplikasi (permissions), dan review kode oleh rekan tim masih memerlukan tindakan manual sebelum aplikasi layak diterbitkan ke Play Store.
 
----
-
-*Praktikum Pemrograman Mobile – Politeknik Negeri Indramayu – 2026*
