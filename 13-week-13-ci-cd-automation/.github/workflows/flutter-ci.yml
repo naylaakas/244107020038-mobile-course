@@ -63,9 +63,8 @@ jobs:
                   }
               }
           }
-          gradle.beforeSettings { settings ->
+          gradle.settingsEvaluated { settings ->
               settings.pluginManagement.repositories {
-                  maven { url = uri(mirrorUrl) }
                   all { ArtifactRepository repo ->
                       if (repo instanceof MavenArtifactRepository) {
                           def u = repo.url.toString()
@@ -74,6 +73,12 @@ jobs:
                           }
                       }
                   }
+                  if (isEmpty()) {
+                      gradlePluginPortal()
+                  }
+                  def mirrorRepo = maven { url = uri(mirrorUrl) }
+                  remove(mirrorRepo)
+                  add(0, mirrorRepo)
               }
           }
           EOF
